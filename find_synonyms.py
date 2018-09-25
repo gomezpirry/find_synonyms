@@ -109,7 +109,7 @@ def main(argv):
             # end if
         # end for
         if index_row > 10:
-            print("ID cell not found")
+            "ID cell not found"
             break
         if not find_id_col:
             index_row += 1
@@ -130,7 +130,7 @@ def main(argv):
             # end if
         # end for
     # end for
-
+    style = xlwt.easyxf('pattern: pattern solid, fore_colour red;')
     for key, values in ids.items():
 
         for id_cell in range(len(ids_column)):
@@ -138,14 +138,37 @@ def main(argv):
             if str(int(ids_column[id_cell].value)) == str(key):
                 write_sheet.write(id_cell + index_row + 1, index_col + 1, len(values))
                 # write all synonyms
+                current_index = 2
                 for synonym in range(len(values)):
-                    write_sheet.write(id_cell + index_row + 1, index_col + synonym + 2, values[synonym])
+                    write_sheet.write(id_cell + index_row + 1, index_col + current_index, "synonym : " + str(synonym + 1), style = style)
+                    current_index += 1
+                    synonym_split = values[synonym].split('"', 2)
+                    # get synonym name
+                    synonym_name = synonym_split[1]
+                    write_sheet.write(id_cell + index_row + 1, index_col + current_index, synonym_name)
+                    current_index += 1
+                    # get synonym type
+                    synonym_rest_split = synonym_split[2].split('[')
+                    synonym_type = synonym_rest_split[0]
+                    write_sheet.write(id_cell + index_row + 1, index_col + current_index, synonym_type)
+                    current_index += 1
+                    # get synonym config
+                    synonym_config = str(synonym_rest_split[1])[0:str(synonym_rest_split[1]).find("{")]
+                    synonym_config_value = str(synonym_rest_split[1])[str(synonym_rest_split[1]).find("{"):
+                                                                      str(synonym_rest_split[1]).find("}")].split(',')
+                    write_sheet.write(id_cell + index_row + 1, index_col + current_index, synonym_config)
+                    current_index += 1
+                    # for all config values of synonym
+                    for synonym_part in range(len(synonym_config_value)):
+                        write_sheet.write(id_cell + index_row + 1, index_col + current_index,
+                                          synonym_config_value[synonym_part])
+                        current_index += 1
 
     if output == '':
         write_book.save(file_input_xls)
     else:
         write_book.save(output)
-    print(ids)
+
 # end main
 
 
