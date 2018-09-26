@@ -12,19 +12,19 @@ Install dependencies (Python 3)
 pip install -r requeriments.txt
 ```
 
-Find synonyms in __input_file.obo__ reading the ids of __input_file.xls__. The input file xls should be have a cell with "ID" text, the cells below this will be taken as ids
+Find synonyms in a set of __input_file.obo__ reading the ids of __input_file.xls__. The script reads all files in the foler with __input_file__ at start of filename. The input file xls should be have a cell with "ID" text, the cells below this will be taken as ids
 __Note:__ Run in this way, you rewrite original __input_file.xls__
 
 ```
 cd find_synonyms
-python3 find_synonyms -i input_file.obo -x input_file.xls
+python3 find_synonyms.py -i input_file.obo -x input_file.xls
 ```
 
-Find synonyms in __input_file.obo__ reading the ids of __input_file.xls__. The results are stored in __output_file.xls__. The input file xls should be have a cell with "ID" text, the cells below this will be taken as ids
+Find synonyms in a set of __input_file.obo__ reading the ids of __input_file.xls__. The script reads all files in the foler with __input_file__ at start of filename. The results are stored in __output_file.xls__. The input file xls should be have a cell with "ID" text, the cells below this will be taken as ids
 
 ```
 cd find_synonyms
-python3 find_synonyms -i input_file.obo -x input_file.xls -o output_file.xls
+python3 find_synonyms.py -i input_file.obo -x input_file.xls -o output_file.xls
 ```
 
 ### Run in Docker
