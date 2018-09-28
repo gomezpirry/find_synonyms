@@ -1,5 +1,3 @@
-obonet==0.2.3
-networkx==2.2
 xlrd==1.1.0
 xlwt==1.3.0
 xlutils==2.0.0

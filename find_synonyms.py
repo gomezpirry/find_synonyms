@@ -1,5 +1,3 @@
-import obonet
-import networkx
 import xlrd
 import xlwt
 import sys
@@ -115,72 +113,105 @@ def main(argv):
 
     # get column later ID
     ids_column = sheet.col(index_col)[index_row + 1:]
+    style = xlwt.easyxf('pattern: pattern solid, fore_colour red;')
 
     # for each obo file
     for i in files_read:
         print('read file ', i)
-        # read .obo file
-        graph = obonet.read_obo(i)
-        print(len(graph), 'nodes')
-
-        # get all nodes of graph
-        nodes = graph.nodes(data=True)
-
-        # get ids
-        ids = {}
-        for cell_ids in ids_column:
-            print('check id:  ', str(int(cell_ids.value)))
-            # for all nodes in graph
-            for node in nodes:
-                # find id node corresponding to excel id
-                if str(node[0]) == str(int(cell_ids.value)):
-                    # get synonyms
-                    ids[node[0]] = node[1]['synonym']
-                # end if
-            # end for
-        # end for
-        style = xlwt.easyxf('pattern: pattern solid, fore_colour red;')
-        for key, values in ids.items():
-
-            for id_cell in range(len(ids_column)):
-                # find id cell corresponding to results
-                if str(int(ids_column[id_cell].value)) == str(key):
-                    write_sheet.write(id_cell + index_row + 1, index_col + 1, len(values))
-                    # write all synonyms
-                    current_index = 2
-                    for synonym in range(len(values)):
-                        write_sheet.write(id_cell + index_row + 1, index_col + current_index, "synonym : " + str(synonym + 1), style = style)
-                        current_index += 1
-                        synonym_split = values[synonym].split('"', 2)
-                        # get synonym name
-                        synonym_name = synonym_split[1]
-                        write_sheet.write(id_cell + index_row + 1, index_col + current_index, synonym_name)
-                        current_index += 1
-                        # get synonym type
-                        synonym_rest_split = synonym_split[2].split('[')
-                        synonym_type = synonym_rest_split[0]
-                        write_sheet.write(id_cell + index_row + 1, index_col + current_index, synonym_type)
-                        current_index += 1
-                        # get synonym config
-                        synonym_config = str(synonym_rest_split[1])[0:str(synonym_rest_split[1]).find("{")]
-                        synonym_config_value = str(synonym_rest_split[1])[str(synonym_rest_split[1]).find("{"):
-                                                                          str(synonym_rest_split[1]).find("}")].split(',')
-                        write_sheet.write(id_cell + index_row + 1, index_col + current_index, synonym_config)
-                        current_index += 1
-                        # for all config values of synonym
-                        for synonym_part in range(len(synonym_config_value)):
-                            write_sheet.write(id_cell + index_row + 1, index_col + current_index,
-                                              synonym_config_value[synonym_part])
-                            current_index += 1
-
+        count_lines = 0
+        count_synonym = 0
+        current_id_text = ""
+        with open(i, encoding='utf-8') as infile:
+            find_id = False
+            count_write_synonym = 1
+            for line in infile:
+                line_split = line.split(' ')
+                if 'id:' in line_split:
+                    id_text = line.split(':')[1].replace('\n', '').strip()
+                    for id_cell in range(len(ids_column)):
+                        if str(ids_column[id_cell].value).split('.')[0].isnumeric():
+                            if id_text == str(int(ids_column[id_cell].value)):
+                                find_id = True
+                                current_id_text = id_text
+                                print(str('id :' + id_text))
+                                continue
+                if find_id:
+                    if 'synonym:' in line_split:
+                        count_synonym += 1
+                        synonym_text = ' '.join(line_split)
+                        for id_cell in range(len(ids_column)):
+                            if str(ids_column[id_cell].value).split('.')[0].isnumeric():
+                                if str(int(ids_column[id_cell].value)) == str(current_id_text):
+                                    write_sheet.write(id_cell + index_row + 1, index_col + 1 + count_write_synonym,
+                                                      "synonym : " + str(count_synonym), style=style)
+                                    count_write_synonym += 1
+                                    synonym_split = synonym_text.split('"', 2)
+                                    if len(synonym_split) <= 2:
+                                        print('bad write synonym')
+                                    else:
+                                        # get synonym name
+                                        synonym_name = synonym_split[1]
+                                        write_sheet.write(id_cell + index_row + 1, index_col + 1 + count_write_synonym,
+                                                          synonym_name)
+                                        count_write_synonym += 1
+                                        synonym_rest_split = synonym_split[2].split('[')
+                                        synonym_type = synonym_rest_split[0]
+                                        write_sheet.write(id_cell + index_row + 1, index_col + 1 + count_write_synonym,
+                                                          synonym_type)
+                                        count_write_synonym += 1
+                                        # get synonym config
+                                        synonym_config = str(synonym_rest_split[1])[
+                                                         0:str(synonym_rest_split[1]).find("{")]
+                                        synonym_config_value = str(synonym_rest_split[1])[
+                                                               str(synonym_rest_split[1]).find("{"):
+                                                               str(synonym_rest_split[1]).find("}")].split(',')
+                                        write_sheet.write(id_cell + index_row + 1, index_col + 1 + count_write_synonym,
+                                                          synonym_config)
+                                        count_write_synonym += 1
+                                        # for all config values of synonym
+                                        for synonym_part in range(len(synonym_config_value)):
+                                            write_sheet.write(id_cell + index_row + 1, index_col + 1 + count_write_synonym,
+                                                              synonym_config_value[synonym_part])
+                                            count_write_synonym += 1
+                                continue
+                    term_text = line_split[0].replace('\n', '').strip()
+                    if '[Term]' in term_text:
+                        find_id = False
+                        for id_cell in range(len(ids_column)):
+                            if str(ids_column[id_cell].value).split('.')[0].isnumeric():
+                                if str(int(ids_column[id_cell].value)) == str(current_id_text):
+                                    write_sheet.write(id_cell + index_row + 1, index_col + 1, count_synonym)
+                        count_synonym = 0
+                        count_write_synonym = 1
+                count_lines += 1
+                print('file: ' + i + " -- " + str(count_lines))
 
     if output == '':
         write_book.save(file_input_xls)
     else:
         write_book.save(output)
 
-# end main
-
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
